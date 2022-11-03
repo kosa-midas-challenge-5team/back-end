@@ -57,6 +57,7 @@ def login(request):
         token = hashlib.sha256()
         token.update(obj.password.encode())
         obj.token = token.hexdigest()
+        obj.save()
         if obj.admin:
             if data['password'] == obj.password:
                 req = {
@@ -84,5 +85,62 @@ def index(request):
         obj = Account.objects.get(user_id=token)
         if status == 'work' or status == 'finish' or status == 'pause' or status == 'home':
             obj.work_status = request.POST['work_status']
+        else:
+            return JsonResponse(status=400)
+
+@csrf_exempt
+def admin(request):
+    if request.method == 'GET':
+        token = request.GET['token']
+        obj = Account.objects.get(token=token)
+        if obj.admin:
+            sort_type = request.GET['sort_type']
+            if sort_type == 'name':
+                name = request.GET['user_id']
+                query_set = Account.objects.filter(name=name)
+                serializer = AccountSerializer(query_set, many=True)
+                return JsonResponse(serializer.data, safe=False)
+            elif sort_type == 'group':
+                name = request.GET['user_id']
+                query_set = Account.objects.filter(group=name)
+                serializer = AccountSerializer(query_set, many=True)
+                return JsonResponse(serializer.data, safe=False)
+            elif sort_type == 'work':
+                query_set = Account.objects.filter(work_status='work')
+                serializer = AccountSerializer(query_set, many=True)
+                return JsonResponse(serializer.data, safe=False)
+            elif sort_type == 'pause':
+                query_set = Account.objects.filter(work_status='pause')
+                serializer = AccountSerializer(query_set, many=True)
+                return JsonResponse(serializer.data, safe=False)
+            elif sort_type == 'home':
+                query_set = Account.objects.filter(work_status='home')
+                serializer = AccountSerializer(query_set, many=True)
+                return JsonResponse(serializer.data, safe=False)
+            elif sort_type == 'finish':
+                query_set = Account.objects.filter(work_status='finish')
+                serializer = AccountSerializer(query_set, many=True)
+                return JsonResponse(serializer.data, safe=False)
+        else:
+            return JsonResponse(status=400)
+
+
+@csrf_exempt
+def modify(request):
+    if request.method == 'PATCH':
+        data = JSONParser().parse(request)
+        token = data['token']
+        obj = Account.objects.get(token=token)
+        if obj.admin:
+            user_id = data['user_id']
+            obj = Account.objects.get(user_id=user_id)
+            if 'name' in data:
+                obj.name = data['name']
+            if 'group' in data:
+                obj.group = data['group']
+            if 'admin' in data:
+                obj.admin = data['admin']
+            obj.save()
+            return HttpResponse(status=200)
         else:
             return JsonResponse(status=400)
