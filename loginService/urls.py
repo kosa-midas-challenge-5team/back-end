@@ -24,6 +24,8 @@ from django.conf.urls import include
 urlpatterns = [
     path('accounts', views.account_list),
     path('accounts/<int:pk>', views.account),
-    path('', views.login),
+    path('login', views.login),
+    path('', views.index),
+    # path('admin/', views.admin),
     path('auth', include('rest_framework.urls', namespace='rest_framework'))
 ]

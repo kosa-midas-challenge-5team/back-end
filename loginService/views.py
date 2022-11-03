@@ -3,6 +3,12 @@ from django.views.decorators.csrf import csrf_exempt
 from .models import Account
 from .serializers import AccountSerializer
 from rest_framework.parsers import JSONParser
+from rest_framework.authtoken.models import Token
+import hashlib
+
+@csrf_exempt
+def test(request):
+    return HttpResponse("test")
 
 @csrf_exempt
 def account_list(request):
@@ -48,19 +54,35 @@ def login(request):
         data = JSONParser().parse(request)
         search_id = data['user_id']
         obj = Account.objects.get(user_id=search_id)
-        print(obj.admin)
+        token = hashlib.sha256()
+        token.update(obj.password.encode())
+        obj.token = token.hexdigest()
         if obj.admin:
             if data['password'] == obj.password:
-                return JsonResponse("admin", status=201, safe=False)
+                req = {
+                    "auth" : "admin",
+                    "token" : obj.token
+                }
+                return JsonResponse(req, status=200)
             else:
-                return HttpResponse(status=400)
+                return JsonResponse(status=400)
         else:
             if data['password'] == obj.password:
-                return HttpResponse(status=200)
+                req = {
+                    "auth" : "user",
+                    "token" : obj.token
+                }
+                return JsonResponse(req, status=200)
             else:
-                return HttpResponse(status=400)
-            
-    
+                return JsonResponse(status=400)
+
 @csrf_exempt
-def test(request):
-    return HttpResponse("test")
+def index(request):
+    if request.method == 'POST':
+        token = request.POST['token']
+        status = request.POST['work_status']
+        obj = Account.objects.get(user_id=token)
+        if status == 'work' or status == 'finish' or status == 'pause' or status == 'home':
+            obj.work_status = request.POST['work_status']
+        else:
+            return JsonResponse(status=400)
