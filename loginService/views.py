@@ -20,6 +20,8 @@ def account_list(request):
 
     elif request.method == 'POST':
         data = JSONParser().parse(request)
+        if Account.objects.filter(user_id=data['user_id']).exists():
+            return HttpResponse(status=409)
         serializer = AccountSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
