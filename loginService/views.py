@@ -49,7 +49,6 @@ def account(request, pk):
     elif request.method == 'DELETE':
         obj.delete()
         return HttpResponse(status=204)
-    
     else:
         return HttpResponse(status=400)
 
@@ -133,6 +132,10 @@ def admin(request):
                 return JsonResponse(serializer.data, safe=False)
             elif sort_type == 'finish':
                 query_set = Account.objects.filter(work_status='finish')
+                serializer = AccountSerializer(query_set, many=True)
+                return JsonResponse(serializer.data, safe=False)
+            else:
+                query_set = Account.objects.all()
                 serializer = AccountSerializer(query_set, many=True)
                 return JsonResponse(serializer.data, safe=False)
         else:
