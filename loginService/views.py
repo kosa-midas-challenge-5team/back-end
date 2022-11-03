@@ -5,6 +5,7 @@ from .serializers import AccountSerializer
 from rest_framework.parsers import JSONParser
 from rest_framework.authtoken.models import Token
 import hashlib
+import time
 
 @csrf_exempt
 def test(request):
@@ -35,7 +36,7 @@ def account(request, pk):
         serializer = AccountSerializer(obj)
         return JsonResponse(serializer.data, safe=False)
 
-    elif request.method == 'PUT':
+    elif request.method == 'PATCH':
         data = JSONParser().parse(request)
         serializer = AccountSerializer(obj, data=data)
         if serializer.is_valid():
@@ -46,7 +47,9 @@ def account(request, pk):
     elif request.method == 'DELETE':
         obj.delete()
         return HttpResponse(status=204)
-
+    
+    else:
+        return HttpResponse(status=400)
 
 @csrf_exempt
 def login(request):
@@ -80,13 +83,22 @@ def login(request):
 @csrf_exempt
 def index(request):
     if request.method == 'POST':
-        token = request.POST['token']
-        status = request.POST['work_status']
-        obj = Account.objects.get(user_id=token)
-        if status == 'work' or status == 'finish' or status == 'pause' or status == 'home':
-            obj.work_status = request.POST['work_status']
-        else:
-            return JsonResponse(status=400)
+        data = JSONParser().parse(request)
+        token = data['token']
+        obj = Account.objects.get(token=token)
+        status = data['work_status']
+        if status == 'work':
+            obj.work_status = data['work_status']
+            obj.work_time = (time.time())
+        elif status == 'finish':
+            obj.work_status = data['work_status']
+            obj.work_time = (int(time.time()) - obj.work_time)
+        elif status == 'pause' or status == 'home':
+            obj.work_status = data['work_status']
+        obj.save()
+        return HttpResponse(status=200)
+    else:
+        return HttpResponse(status=400)
 
 @csrf_exempt
 def admin(request):
@@ -122,7 +134,7 @@ def admin(request):
                 serializer = AccountSerializer(query_set, many=True)
                 return JsonResponse(serializer.data, safe=False)
         else:
-            return JsonResponse(status=400)
+            return HttpResponse(status=400)
 
 
 @csrf_exempt
@@ -143,4 +155,4 @@ def modify(request):
             obj.save()
             return HttpResponse(status=200)
         else:
-            return JsonResponse(status=400)
+            return HttpResponse(status=400)

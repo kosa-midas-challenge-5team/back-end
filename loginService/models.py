@@ -10,4 +10,5 @@ class Account(models.Model):
     admin = models.BooleanField(default=False)
     token = models.CharField(max_length = 200, default='')
     work_status = models.CharField(max_length = 50, default='')
+    work_time = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
