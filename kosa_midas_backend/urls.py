@@ -20,4 +20,5 @@ from django.conf.urls import include
 urlpatterns = [
     path("admin/admin", admin.site.urls),
     path("", include("loginService.urls")),
+    path("coffee_chat/", include("coffee_chat.urls")),
 ]
